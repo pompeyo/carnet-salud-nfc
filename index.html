@@ -1,145 +1,161 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Carnet de Salud Digital</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Carnet de Salud Digital</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f2f6fa;
-            margin: 0;
-            padding: 0;
-        }
-        .card {
-            max-width: 420px;
-            margin: 40px auto;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 24px;
-        }
-        h1 {
-            text-align: center;
-            color: #005baa;
-            margin-bottom: 20px;
-        }
-        .field {
-            margin-bottom: 12px;
-            font-size: 16px;
-        }
-        .label {
-            font-weight: bold;
-            color: #333;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 13px;
-            color: #777;
-        }
-        .nodata {
-            text-align: center;
-            color: #999;
-            font-style: italic;
-        }
-        .timer {
-            text-align: center;
-            margin-top: 12px;
-            font-size: 13px;
-            color: #c0392b;
-        }
-    </style>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f2f6fa;
+    margin: 0;
+}
+.card {
+    max-width: 420px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 24px;
+}
+h1 {
+    text-align: center;
+    color: #005baa;
+}
+.field {
+    margin-bottom: 10px;
+}
+.label {
+    font-weight: bold;
+}
+.timer {
+    text-align: center;
+    color: #b00020;
+    margin-top: 10px;
+    font-weight: bold;
+}
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: #777;
+}
+.hidden {
+    display: none;
+}
+</style>
 </head>
+
 <body>
 
 <div class="card">
-    <h1>🪪 Carnet de Salud Digital</h1>
+<h1>🪪 Carnet de Salud Digital</h1>
 
-    <div class="field">
-        <span class="label">ID Carnet (NFC):</span>
-        <span id="uid-nfc">—</span>
-    </div>
+<div id="contenido">
+    <div class="field"><span class="label">Nombre:</span> <span id="nombre">—</span></div>
+    <div class="field"><span class="label">DNI:</span> <span id="dni">—</span></div>
+    <div class="field"><span class="label">Sexo:</span> <span id="sexo">—</span></div>
+    <div class="field"><span class="label">Grupo sanguíneo:</span> <span id="grupo">—</span></div>
+    <div class="field"><span class="label">Alergias:</span> <span id="alergias">—</span></div>
+    <div class="field"><span class="label">Enfermedades:</span> <span id="enfermedades">—</span></div>
+</div>
 
-    <div id="contenido-carnet"></div>
+<div id="mensaje" class="hidden">
+    <p><strong>No hay datos disponibles.</strong></p>
+    <p>Vuelva a escanear el carnet NFC.</p>
+</div>
 
-    <div id="timer" class="timer"></div>
+<div class="timer" id="timer"></div>
 
-    <div class="footer">
-        SALUDPOL · Carnet digital NFC<br>
-        Solo para fines de identificación
-    </div>
+<div class="footer">
+SALUDPOL · Visualización temporal<br>
+La sesión se cierra automáticamente
+</div>
 </div>
 
 <script>
-    // ⏱️ CONTADOR: SIEMPRE ACTIVO
-    let segundos = 60;
-    const timerDiv = document.getElementById("timer");
+const SESSION_KEY = "nfc_session_activa";
+const EXPIRACION_MS = 60000;
 
-    function iniciarContador() {
-        timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+// Base de datos simulada
+const DATA = {
+  "04:61:00:48:24:02:89": {
+    nombre: "PERCIAL YUYARIMA, MILAGRO DE JESUS",
+    dni: "60985388",
+    sexo: "FEMENINO",
+    grupo: "O+",
+    alergias: "Penicilina",
+    enfermedades: "Diabetes, Hipertensión"
+  },
+  "04:81:44:45:24:02:89": {
+    nombre: "CORDOVA CORDOVA, EDUARDO",
+    dni: "43283561",
+    sexo: "MASCULINO",
+    grupo: "A+",
+    alergias: "Ninguna conocida",
+    enfermedades: "Asma leve"
+  }
+};
 
-        const countdown = setInterval(() => {
-            segundos--;
-            timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+// Si ya hubo una sesión → bloquear
+if (sessionStorage.getItem(SESSION_KEY)) {
+    bloquear();
+} else {
+    iniciar();
+}
 
-            if (segundos <= 0) {
-                clearInterval(countdown);
-                window.location.href = "about:blank";
-            }
-        }, 1000);
-    }
-
-    iniciarContador();
-
-    // 📥 LECTURA DE UID
+function iniciar() {
     const params = new URLSearchParams(window.location.search);
     const uid = params.get("uid");
 
-    const uidSpan = document.getElementById("uid-nfc");
-    const contenido = document.getElementById("contenido-carnet");
+    if (!uid || !DATA[uid]) {
+        bloquear();
+        return;
+    }
 
-    const carnets = {
-        "04:61:00:48:24:02:89": {
-            dni: "60985388",
-            nombre: "PERCIAL YUYARIMA, MILAGRO DE JESUS",
-            sexo: "FEMENINO",
-            grupo: "O+",
-            alergias: "Penicilina",
-            enfermedades: "Diabetes, Hipertensión"
-        },
-        "04:81:44:45:24:02:89": {
-            dni: "43283561",
-            nombre: "CORDOVA CORDOVA, EDUARDO",
-            sexo: "MASCULINO",
-            grupo: "A+",
-            alergias: "Ninguna conocida",
-            enfermedades: "Asma leve"
+    sessionStorage.setItem(SESSION_KEY, "true");
+
+    const d = DATA[uid];
+    nombre.textContent = d.nombre;
+    dni.textContent = d.dni;
+    sexo.textContent = d.sexo;
+    grupo.textContent = d.grupo;
+    alergias.textContent = d.alergias;
+    enfermedades.textContent = d.enfermedades;
+
+    // Limpiar URL
+    history.replaceState({}, document.title, location.pathname);
+
+    iniciarTimer();
+}
+
+function bloquear() {
+    document.getElementById("contenido").classList.add("hidden");
+    document.getElementById("mensaje").classList.remove("hidden");
+    iniciarTimer();
+}
+
+function iniciarTimer() {
+    let restante = EXPIRACION_MS / 1000;
+    timer.textContent = `Cierre automático en ${restante}s`;
+
+    const interval = setInterval(() => {
+        restante--;
+        timer.textContent = `Cierre automático en ${restante}s`;
+
+        if (restante <= 0) {
+            clearInterval(interval);
+            sessionStorage.clear();
+            document.body.innerHTML = "<h2 style='text-align:center;margin-top:40px'>Sesión finalizada</h2>";
         }
-    };
+    }, 1000);
+}
 
-    if (uid && carnets[uid]) {
-        uidSpan.textContent = uid;
-        const c = carnets[uid];
-
-        contenido.innerHTML = `
-            <div class="field"><span class="label">Nombre:</span> ${c.nombre}</div>
-            <div class="field"><span class="label">DNI:</span> ${c.dni}</div>
-            <div class="field"><span class="label">Sexo:</span> ${c.sexo}</div>
-            <div class="field"><span class="label">Grupo sanguíneo:</span> ${c.grupo}</div>
-            <div class="field"><span class="label">Alergias:</span> ${c.alergias}</div>
-            <div class="field"><span class="label">Enfermedades:</span> ${c.enfermedades}</div>
-        `;
-    } else {
-        uidSpan.textContent = uid ? uid : "—";
-        contenido.innerHTML = `<div class="nodata">No hay datos</div>`;
-    }
-
-    // 🧹 Limpia la URL (siempre que haya UID)
-    if (uid) {
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
+// Evitar volver atrás con datos
+window.onpopstate = () => {
+    location.reload();
+};
 </script>
 
 </body>
