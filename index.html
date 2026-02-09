@@ -44,6 +44,12 @@
             color: #999;
             font-style: italic;
         }
+        .timer {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -60,6 +66,8 @@
         <div class="nodata">No hay datos</div>
     </div>
 
+    <div id="timer" class="timer"></div>
+
     <div class="footer">
         SALUDPOL · Carnet digital NFC<br>
         Solo para fines de identificación
@@ -72,8 +80,8 @@
 
     const uidSpan = document.getElementById("uid-nfc");
     const contenido = document.getElementById("contenido-carnet");
+    const timerDiv = document.getElementById("timer");
 
-    // Base de datos simulada
     const carnets = {
         "04:61:00:48:24:02:89": {
             dni: "60985388",
@@ -95,7 +103,6 @@
 
     if (uid && carnets[uid]) {
         uidSpan.textContent = uid;
-
         const c = carnets[uid];
 
         contenido.innerHTML = `
@@ -106,7 +113,6 @@
             <div class="field"><span class="label">Alergias:</span> ${c.alergias}</div>
             <div class="field"><span class="label">Enfermedades:</span> ${c.enfermedades}</div>
         `;
-
     } else {
         uidSpan.textContent = uid ? uid : "—";
         contenido.innerHTML = `<div class="nodata">No hay datos</div>`;
@@ -116,6 +122,21 @@
     if (uid) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    // ⏱️ Cierre automático en 1 minuto
+    let segundos = 60;
+    timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+
+    const countdown = setInterval(() => {
+        segundos--;
+        timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+
+        if (segundos <= 0) {
+            clearInterval(countdown);
+            // Redirección segura (equivalente a cerrar)
+            window.location.href = "about:blank";
+        }
+    }, 1000);
 </script>
 
 </body>
