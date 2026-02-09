@@ -39,6 +39,11 @@
             font-size: 13px;
             color: #777;
         }
+        .nodata {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -51,11 +56,9 @@
         <span id="uid-nfc">—</span>
     </div>
 
-    <div class="field"><span class="label">Nombre:</span> Juan Pérez Gómez</div>
-    <div class="field"><span class="label">DNI:</span> 40163703</div>
-    <div class="field"><span class="label">Grupo sanguíneo:</span> O+</div>
-    <div class="field"><span class="label">Alergias:</span> Penicilina</div>
-    <div class="field"><span class="label">Enfermedades:</span> Diabetes, Hipertensión</div>
+    <div id="contenido-carnet">
+        <div class="nodata">No hay datos</div>
+    </div>
 
     <div class="footer">
         SALUDPOL · Carnet digital NFC<br>
@@ -64,15 +67,53 @@
 </div>
 
 <script>
-    // Leer parámetros de la URL
     const params = new URLSearchParams(window.location.search);
     const uid = params.get("uid");
 
-    if (uid) {
-        // Imprimir el UID en el campo
-        document.getElementById("uid-nfc").textContent = uid;
+    const uidSpan = document.getElementById("uid-nfc");
+    const contenido = document.getElementById("contenido-carnet");
 
-        // Limpiar la URL (oculta el parámetro)
+    // Base de datos simulada
+    const carnets = {
+        "04:61:00:48:24:02:89": {
+            dni: "60985388",
+            nombre: "PERCIAL YUYARIMA, MILAGRO DE JESUS",
+            sexo: "FEMENINO",
+            grupo: "O+",
+            alergias: "Penicilina",
+            enfermedades: "Diabetes, Hipertensión"
+        },
+        "04:81:44:45:24:02:89": {
+            dni: "43283561",
+            nombre: "CORDOVA CORDOVA, EDUARDO",
+            sexo: "MASCULINO",
+            grupo: "A+",
+            alergias: "Ninguna conocida",
+            enfermedades: "Asma leve"
+        }
+    };
+
+    if (uid && carnets[uid]) {
+        uidSpan.textContent = uid;
+
+        const c = carnets[uid];
+
+        contenido.innerHTML = `
+            <div class="field"><span class="label">Nombre:</span> ${c.nombre}</div>
+            <div class="field"><span class="label">DNI:</span> ${c.dni}</div>
+            <div class="field"><span class="label">Sexo:</span> ${c.sexo}</div>
+            <div class="field"><span class="label">Grupo sanguíneo:</span> ${c.grupo}</div>
+            <div class="field"><span class="label">Alergias:</span> ${c.alergias}</div>
+            <div class="field"><span class="label">Enfermedades:</span> ${c.enfermedades}</div>
+        `;
+
+    } else {
+        uidSpan.textContent = uid ? uid : "—";
+        contenido.innerHTML = `<div class="nodata">No hay datos</div>`;
+    }
+
+    // Limpia la URL
+    if (uid) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 </script>
