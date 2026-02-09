@@ -46,7 +46,7 @@
         }
         .timer {
             text-align: center;
-            margin-top: 10px;
+            margin-top: 12px;
             font-size: 13px;
             color: #c0392b;
         }
@@ -62,9 +62,7 @@
         <span id="uid-nfc">—</span>
     </div>
 
-    <div id="contenido-carnet">
-        <div class="nodata">No hay datos</div>
-    </div>
+    <div id="contenido-carnet"></div>
 
     <div id="timer" class="timer"></div>
 
@@ -75,12 +73,32 @@
 </div>
 
 <script>
+    // ⏱️ CONTADOR: SIEMPRE ACTIVO
+    let segundos = 60;
+    const timerDiv = document.getElementById("timer");
+
+    function iniciarContador() {
+        timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+
+        const countdown = setInterval(() => {
+            segundos--;
+            timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
+
+            if (segundos <= 0) {
+                clearInterval(countdown);
+                window.location.href = "about:blank";
+            }
+        }, 1000);
+    }
+
+    iniciarContador();
+
+    // 📥 LECTURA DE UID
     const params = new URLSearchParams(window.location.search);
     const uid = params.get("uid");
 
     const uidSpan = document.getElementById("uid-nfc");
     const contenido = document.getElementById("contenido-carnet");
-    const timerDiv = document.getElementById("timer");
 
     const carnets = {
         "04:61:00:48:24:02:89": {
@@ -118,25 +136,10 @@
         contenido.innerHTML = `<div class="nodata">No hay datos</div>`;
     }
 
-    // Limpia la URL
+    // 🧹 Limpia la URL (siempre que haya UID)
     if (uid) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
-
-    // ⏱️ Cierre automático en 1 minuto
-    let segundos = 60;
-    timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
-
-    const countdown = setInterval(() => {
-        segundos--;
-        timerDiv.textContent = `Esta página se cerrará en ${segundos} segundos`;
-
-        if (segundos <= 0) {
-            clearInterval(countdown);
-            // Redirección segura (equivalente a cerrar)
-            window.location.href = "about:blank";
-        }
-    }, 1000);
 </script>
 
 </body>
