@@ -46,6 +46,11 @@
 <div class="card">
     <h1>🪪 Carnet de Salud Digital</h1>
 
+    <div class="field">
+        <span class="label">ID Carnet (NFC):</span>
+        <span id="uid-nfc">—</span>
+    </div>
+
     <div class="field"><span class="label">Nombre:</span> Juan Pérez Gómez</div>
     <div class="field"><span class="label">DNI:</span> 40163703</div>
     <div class="field"><span class="label">Grupo sanguíneo:</span> O+</div>
@@ -57,6 +62,20 @@
         Solo para fines de identificación
     </div>
 </div>
+
+<script>
+    // Leer parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const uid = params.get("uid");
+
+    if (uid) {
+        // Imprimir el UID en el campo
+        document.getElementById("uid-nfc").textContent = uid;
+
+        // Limpiar la URL (oculta el parámetro)
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+</script>
 
 </body>
 </html>
